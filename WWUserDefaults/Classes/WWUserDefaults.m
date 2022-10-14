@@ -35,16 +35,7 @@ enum TypeEncodings {
 
 - (NSUserDefaults *)userDefaults {
     if (!_userDefaults) {
-        NSString *suiteName = nil;
-        if ([NSUserDefaults instancesRespondToSelector:@selector(initWithSuiteName:)]) {
-            suiteName = [self wwUserSuiteName];
-        }
-
-        if (suiteName && suiteName.length) {
-            _userDefaults = [[NSUserDefaults alloc] initWithSuiteName:suiteName];
-        } else {
-            _userDefaults = [NSUserDefaults standardUserDefaults];
-        }
+        _userDefaults = [NSUserDefaults standardUserDefaults];
     }
 
     return _userDefaults;
@@ -52,7 +43,7 @@ enum TypeEncodings {
 
 - (NSString *)defaultsKeyForPropertyNamed:(char const *)propertyName {
     NSString *key = [NSString stringWithFormat:@"%s", propertyName];
-    return [self wwUserTransformKey:key];
+    return key;
 }
 
 - (NSString *)defaultsKeyForSelector:(SEL)selector {
@@ -140,43 +131,9 @@ static void objectSetter(WWUserDefaults *self, SEL _cmd, id object) {
 - (instancetype)init {
     self = [super init];
     if (self) {
-        SEL setupDefaultSEL = NSSelectorFromString([NSString stringWithFormat:@"%@pDefaults", @"setu"]);
-        if ([self respondsToSelector:setupDefaultSEL]) {
-            NSDictionary *defaults = [self performSelector:setupDefaultSEL];
-            NSMutableDictionary *mutableDefaults = [NSMutableDictionary dictionaryWithCapacity:[defaults count]];
-            for (NSString *key in defaults) {
-                id value = [defaults objectForKey:key];
-                NSString *transformedKey = [self wwUserTransformKey:key];
-                [mutableDefaults setObject:value forKey:transformedKey];
-            }
-            [self.userDefaults registerDefaults:mutableDefaults];
-        }
-
         [self generateAccessorMethods];
     }
-
     return self;
-}
-
-- (NSString *)wwUserTransformKey:(NSString *)key {
-    if ([self respondsToSelector:@selector(transformKey:)]) {
-        return [self performSelector:@selector(transformKey:) withObject:key];
-    }
-
-    return key;
-}
-
-- (NSString *)wwUserSuiteName {
-    // Backwards compatibility (v 1.0.0)
-    if ([self respondsToSelector:@selector(suitName)]) {
-        return [self performSelector:@selector(suitName)];
-    }
-
-    if ([self respondsToSelector:@selector(suiteName)]) {
-        return [self performSelector:@selector(suiteName)];
-    }
-
-    return nil;
 }
 
 #pragma GCC diagnostic pop
